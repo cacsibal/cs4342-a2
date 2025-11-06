@@ -23,7 +23,7 @@ def gradfMSE (wtilde, Xtilde, y, alpha = 0.):
 
 # Given a design matrix Xtilde and labels y, train a linear regressor for Xtilde and y using the analytical solution.
 def method1 (Xtilde, y):
-    pass
+    return np.linalg.solve(Xtilde @ Xtilde.T, Xtilde @ y)
 
 # Given a design matrix Xtilde and labels y, train a linear regressor for Xtilde and y using gradient descent on fMSE.
 def method2 (Xtilde, y):
