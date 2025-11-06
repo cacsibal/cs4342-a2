@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt  # to show images
 # Given an array of faces (N x M x M, where N is number of examples and M is number of pixes along each axis),
 # return a design matrix Xtilde ((M**2 + 1) x N) whose last row contains all 1s.
 def reshapeAndAppend1s (faces):
-    pass
+    n, m, _ = faces.shape
+    X = faces.reshape(n, m * m).T
+    Xtilde = np.vstack((X, np.ones((1, n))))
+
+    return Xtilde
 
 # Given a vector of weights wtilde, a design matrix Xtilde, and a vector of labels y, return the (unregularized)
 # MSE.
