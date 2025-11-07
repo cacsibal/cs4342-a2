@@ -19,7 +19,20 @@ def fMSE (wtilde, Xtilde, y):
 # Given a vector of weights wtilde, a design matrix Xtilde, and a vector of labels y, and a regularization strength
 # alpha (default value of 0), return the gradient of the (regularized) MSE loss.
 def gradfMSE (wtilde, Xtilde, y, alpha = 0.):
-    pass
+    n = Xtilde.shape[1]  # Number of examples
+    yhat = Xtilde.T @ wtilde
+    
+    # Gradient of MSE: (1/n) * Xtilde @ (yhat - y)
+    grad = (1/n) * Xtilde @ (yhat - y)
+    
+    # Add L2 regularization gradient: (alpha/n) * w
+    # Important: only regularize w (first 2304 components), not b (last component)
+    if alpha > 0:
+        reg_grad = np.zeros_like(wtilde)
+        reg_grad[:-1] = (alpha / n) * wtilde[:-1]  # Regularize all except bias term
+        grad += reg_grad
+    
+    return grad
 
 # Given a design matrix Xtilde and labels y, train a linear regressor for Xtilde and y using the analytical solution.
 def method1 (Xtilde, y):
@@ -27,18 +40,29 @@ def method1 (Xtilde, y):
 
 # Given a design matrix Xtilde and labels y, train a linear regressor for Xtilde and y using gradient descent on fMSE.
 def method2 (Xtilde, y):
-    pass
+    return gradientDescent(Xtilde, y, alpha=0.)
 
 # Given a design matrix Xtilde and labels y, train a linear regressor for Xtilde and y using gradient descent on fMSE
 # with regularization.
 def method3 (Xtilde, y):
     ALPHA = 0.1
-    pass
+    return gradientDescent(Xtilde, y, alpha=ALPHA)
 
 # Helper method for method2 and method3.
 def gradientDescent (Xtilde, y, alpha = 0.):
     EPSILON = 3e-3  # Step size aka learning rate
     T = 5000  # Number of gradient descent iterations
+
+    # Initialize weights randomly
+    d = Xtilde.shape[0]  # Dimension (2304 + 1)
+    wtilde = np.random.randn(d) * 0.01
+    
+    # Perform gradient descent
+    for t in range(T):
+        grad = gradfMSE(wtilde, Xtilde, y, alpha)
+        wtilde = wtilde - EPSILON * grad
+    
+    return wtilde
 
 if __name__ == "__main__":
     # Load data
@@ -47,9 +71,28 @@ if __name__ == "__main__":
     Xtilde_te = reshapeAndAppend1s(np.load("age_regression_Xte.npy"))
     yte = np.load("age_regression_yte.npy")
 
-    w1 = method1(Xtilde_tr, ytr)
-    w2 = method2(Xtilde_tr, ytr)
-    w3 = method3(Xtilde_tr, ytr)
-
     # Report fMSE cost using each of the three learned weight vectors
-    # ...
+
+    # Part (a): Analytical Solution
+    print("PART (a): Analytical Solution")
+    w1 = method1(Xtilde_tr, ytr)
+    train_loss_1 = fMSE(w1, Xtilde_tr, ytr)
+    test_loss_1 = fMSE(w1, Xtilde_te, yte)
+    print(f"Training Half-MSE: {train_loss_1:.4f}")
+    print(f"Testing Half-MSE:  {test_loss_1:.4f}")
+
+    # Part (b): Gradient Descent
+    print("PART (b): Gradient Descent (Unregularized)")
+    w2 = method2(Xtilde_tr, ytr)
+    train_loss_2 = fMSE(w2, Xtilde_tr, ytr)
+    test_loss_2 = fMSE(w2, Xtilde_te, yte)
+    print(f"Training Half-MSE: {train_loss_2:.4f}")
+    print(f"Testing Half-MSE:  {test_loss_2:.4f}")
+
+    # Part (c): Regularized Gradient Descent
+    print("PART (c): Gradient Descent with L2 Regularization (alpha=0.1)")
+    w3 = method3(Xtilde_tr, ytr)
+    train_loss_3 = fMSE(w3, Xtilde_tr, ytr)
+    test_loss_3 = fMSE(w3, Xtilde_te, yte)
+    print(f"Training Half-MSE: {train_loss_3:.4f}")
+    print(f"Testing Half-MSE:  {test_loss_3:.4f}")
