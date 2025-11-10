@@ -21,15 +21,12 @@ def fMSE (wtilde, Xtilde, y):
 def gradfMSE (wtilde, Xtilde, y, alpha = 0.):
     n = Xtilde.shape[1]  # Number of examples
     yhat = Xtilde.T @ wtilde
-    
-    # Gradient of MSE: (1/n) * Xtilde @ (yhat - y)
+
     grad = (1/n) * Xtilde @ (yhat - y)
-    
-    # Add L2 regularization gradient: (alpha/n) * w
-    # Important: only regularize w (first 2304 components), not b (last component)
+
     if alpha > 0:
         reg_grad = np.zeros_like(wtilde)
-        reg_grad[:-1] = (alpha / n) * wtilde[:-1]  # Regularize all except bias term
+        reg_grad[:-1] = (alpha / n) * wtilde[:-1]  # don't regularize bias
         grad += reg_grad
     
     return grad
@@ -48,21 +45,28 @@ def method3 (Xtilde, y):
     ALPHA = 0.1
     return gradientDescent(Xtilde, y, alpha=ALPHA)
 
-# Helper method for method2 and method3.
 def gradientDescent (Xtilde, y, alpha = 0.):
     EPSILON = 3e-3  # Step size aka learning rate
     T = 5000  # Number of gradient descent iterations
 
     # Initialize weights randomly
-    d = Xtilde.shape[0]  # Dimension (2304 + 1)
+    d = Xtilde.shape[0]  # (imgsize ** 2 + 1)
     wtilde = np.random.randn(d) * 0.01
     
-    # Perform gradient descent
     for t in range(T):
         grad = gradfMSE(wtilde, Xtilde, y, alpha)
         wtilde = wtilde - EPSILON * grad
     
     return wtilde
+
+def print_weights(wtilde: np.ndarray, plot_name: str):
+    wtilde = wtilde[:-1].reshape(48, 48)
+
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.imshow(wtilde, cmap="gray")
+    plt.savefig(plot_name)
+    plt.show()
 
 if __name__ == "__main__":
     # Load data
@@ -80,6 +84,7 @@ if __name__ == "__main__":
     test_loss_1 = fMSE(w1, Xtilde_te, yte)
     print(f"Training Half-MSE: {train_loss_1:.4f}")
     print(f"Testing Half-MSE:  {test_loss_1:.4f}")
+    print_weights(w1, "age_regression_w1.png")
 
     # Part (b): Gradient Descent
     print("PART (b): Gradient Descent (Unregularized)")
@@ -88,6 +93,7 @@ if __name__ == "__main__":
     test_loss_2 = fMSE(w2, Xtilde_te, yte)
     print(f"Training Half-MSE: {train_loss_2:.4f}")
     print(f"Testing Half-MSE:  {test_loss_2:.4f}")
+    print_weights(w2, "age_regression_w2.png")
 
     # Part (c): Regularized Gradient Descent
     print("PART (c): Gradient Descent with L2 Regularization (alpha=0.1)")
@@ -96,3 +102,4 @@ if __name__ == "__main__":
     test_loss_3 = fMSE(w3, Xtilde_te, yte)
     print(f"Training Half-MSE: {train_loss_3:.4f}")
     print(f"Testing Half-MSE:  {test_loss_3:.4f}")
+    print_weights(w3, "age_regression_w3.png")
